@@ -417,9 +417,32 @@
     let current = 0;
     let score = 0;
     let answered = false;
+    let questions = createQuizQuestions();
+
+    function shuffle(items) {
+      for (let index = items.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [items[index], items[randomIndex]] = [items[randomIndex], items[index]];
+      }
+      return items;
+    }
+
+    function createQuizQuestions() {
+      return shuffle(quizData.map((item) => {
+        const choices = shuffle(item.choices.map((choice, index) => ({
+          text: choice,
+          isAnswer: index === item.answer
+        })));
+        return {
+          ...item,
+          choices: choices.map((choice) => choice.text),
+          answer: choices.findIndex((choice) => choice.isAnswer)
+        };
+      }));
+    }
 
     function renderQuestion() {
-      const item = quizData[current];
+      const item = questions[current];
       counterEl.textContent = "문항 " + (current + 1) + " / " + quizData.length;
       questionEl.textContent = item.question;
       scoreEl.textContent = String(score);
@@ -445,7 +468,7 @@
     function handleAnswer(selected, clickedButton) {
       if (answered) return;
       answered = true;
-      const item = quizData[current];
+      const item = questions[current];
       const isCorrect = selected === item.answer;
       const buttons = choicesEl.querySelectorAll(".choice-btn");
 
@@ -507,6 +530,7 @@
     function restartQuiz() {
       current = 0;
       score = 0;
+      questions = createQuizQuestions();
       resultView.classList.add("hidden");
       quizView.classList.remove("hidden");
       renderQuestion();
