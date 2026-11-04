@@ -188,6 +188,19 @@
       transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease;
     }
 
+    .choice-number {
+      display: inline-grid;
+      place-items: center;
+      width: 1.6em;
+      height: 1.6em;
+      margin-right: 8px;
+      border-radius: 6px;
+      color: var(--primary);
+      background: color-mix(in oklab, var(--primary) 12%, var(--card));
+      font-size: 0.85em;
+      font-weight: 700;
+    }
+
     .choice-btn:hover {
       border-color: var(--primary);
       transform: translateY(-1px);
@@ -351,52 +364,62 @@
       {
         question: "태양계에서 가장 큰 행성은 무엇일까요?",
         choices: ["화성", "목성", "금성", "토성"],
-        answer: 1
+        answer: 1,
+        explanation: "목성은 태양계에서 지름과 질량이 가장 큰 행성입니다."
       },
       {
         question: "달에 처음 착륙한 임무는 무엇일까요?",
         choices: ["아폴로 11호", "보이저 1호", "스푸트니크 1호", "챌린저"],
-        answer: 0
+        answer: 0,
+        explanation: "아폴로 11호는 1969년 인류 최초로 달에 착륙한 유인 임무입니다."
       },
       {
         question: "붉은 행성이라고 불리는 행성은?",
         choices: ["수성", "화성", "천왕성", "해왕성"],
-        answer: 1
+        answer: 1,
+        explanation: "화성 표면의 산화철 먼지가 붉은빛을 띠게 합니다."
       },
       {
         question: "국제우주정거장의 약자는 무엇인가요?",
         choices: ["HST", "ISS", "LRO", "SLS"],
-        answer: 1
+        answer: 1,
+        explanation: "ISS는 International Space Station, 즉 국제우주정거장의 약자입니다."
       },
       {
         question: "지구에서 가장 가까운 별은 무엇일까요? (태양 제외)",
         choices: ["시리우스", "베텔게우스", "프록시마 센타우리", "폴라리스"],
-        answer: 2
+        answer: 2,
+        explanation: "프록시마 센타우리는 태양 다음으로 지구에서 가까운 별입니다."
       },
       {
         question: "고리로 유명한 행성은?",
         choices: ["토성", "목성", "금성", "명왕성"],
-        answer: 0
+        answer: 0,
+        explanation: "토성의 눈에 띄는 고리는 주로 얼음과 암석 조각으로 이루어져 있습니다."
       },
       {
         question: "허블 우주망원경이 관측하는 주된 영역은?",
         choices: ["주로 심해", "대기권 내부", "우주(가시광/근적외선 등)", "지하 암석층"],
-        answer: 2
+        answer: 2,
+        explanation: "허블은 지구 대기권 밖에서 가시광선과 자외선, 근적외선 등으로 우주를 관측합니다."
       },
       {
         question: "블랙홀에서 빛조차 빠져나올 수 없는 경계는 무엇일까요?",
         choices: ["사건의 지평선", "오르트 구름", "소행성대", "자기권"],
-        answer: 0
+        answer: 0,
+        explanation: "사건의 지평선 안쪽에서는 빛을 포함한 어떤 것도 바깥으로 빠져나올 수 없습니다."
       },
       {
         question: "NASA의 화성 탐사 로버 이름이 아닌 것은?",
         choices: ["큐리오시티", "퍼서비어런스", "오퍼튜니티", "아틀란티스"],
-        answer: 3
+        answer: 3,
+        explanation: "아틀란티스는 화성 로버가 아니라 NASA의 우주왕복선 이름입니다."
       },
       {
         question: "별이 탄생하는 거대한 가스와 먼지 구름은?",
         choices: ["성운", "혜성", "퀘이사", "펄서"],
-        answer: 0
+        answer: 0,
+        explanation: "성운의 가스와 먼지가 뭉치고 붕괴하면서 새로운 별이 태어날 수 있습니다."
       }
     ];
 
@@ -435,7 +458,13 @@
         const btn = document.createElement("button");
         btn.className = "choice-btn";
         btn.type = "button";
-        btn.textContent = choice;
+        btn.setAttribute("aria-keyshortcuts", String(index + 1));
+        const number = document.createElement("span");
+        number.className = "choice-number";
+        number.textContent = String(index + 1);
+        const label = document.createElement("span");
+        label.textContent = choice;
+        btn.append(number, label);
         btn.addEventListener("click", () => handleAnswer(index, btn));
         choicesEl.appendChild(btn);
       });
@@ -461,11 +490,11 @@
         scoreEl.textContent = String(score);
         clickedButton.style.borderColor = "var(--good)";
         feedbackEl.className = "feedback correct show";
-        feedbackEl.textContent = "정답입니다! 🚀";
+        feedbackEl.textContent = "정답입니다! 🚀 " + item.explanation;
       } else {
         clickedButton.style.borderColor = "var(--bad)";
         feedbackEl.className = "feedback wrong show";
-        feedbackEl.textContent = "오답입니다. 정답은 '" + item.choices[item.answer] + "' 입니다.";
+        feedbackEl.textContent = "오답입니다. 정답은 '" + item.choices[item.answer] + "' 입니다. " + item.explanation;
       }
 
       nextBtn.disabled = false;
@@ -514,6 +543,11 @@
 
     nextBtn.addEventListener("click", nextQuestion);
     restartBtn.addEventListener("click", restartQuiz);
+    document.addEventListener("keydown", (event) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || answered || !/^[1-4]$/.test(event.key)) return;
+      const button = choicesEl.children[Number(event.key) - 1];
+      if (button) button.click();
+    });
 
     renderQuestion();
   </script>
