@@ -311,6 +311,21 @@
       color: var(--muted);
     }
 
+    .result .best-score {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .result .record-status {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .result .record-status:empty,
+    .result .storage-notice:empty {
+      display: none;
+    }
+
     @keyframes shake {
       0%,
       100% { transform: translateX(0); }
@@ -355,6 +370,9 @@
       <div class="emoji" id="resultEmoji">🌟</div>
       <h2 id="resultTitle">완료!</h2>
       <p id="resultText"></p>
+      <p class="best-score" id="bestScoreText"></p>
+      <p class="record-status" id="recordStatus"></p>
+      <p class="storage-notice" id="storageNotice"></p>
       <button class="restart-btn" id="restartBtn">다시 도전</button>
     </section>
   </main>
@@ -435,12 +453,30 @@
     const resultEmoji = document.getElementById("resultEmoji");
     const resultTitle = document.getElementById("resultTitle");
     const resultText = document.getElementById("resultText");
+    const bestScoreText = document.getElementById("bestScoreText");
+    const recordStatus = document.getElementById("recordStatus");
+    const storageNotice = document.getElementById("storageNotice");
     const restartBtn = document.getElementById("restartBtn");
 
     let current = 0;
     let score = 0;
     let answered = false;
+    const highScoreStorageKey = "spaceQuizHighScore";
+    let highScore = null;
+    let highScoreStorageAvailable = true;
     let questions = createQuizQuestions();
+
+    try {
+      const savedHighScore = window.localStorage.getItem(highScoreStorageKey);
+      if (savedHighScore !== null && /^\d+$/.test(savedHighScore)) {
+        const parsedHighScore = Number(savedHighScore);
+        if (Number.isInteger(parsedHighScore) && parsedHighScore <= quizData.length) {
+          highScore = parsedHighScore;
+        }
+      }
+    } catch {
+      highScoreStorageAvailable = false;
+    }
 
     function shuffle(items) {
       for (let index = items.length - 1; index > 0; index -= 1) {
@@ -529,6 +565,18 @@
       quizView.classList.add("hidden");
       resultView.classList.remove("hidden");
 
+      const isNewRecord = highScore === null || score > highScore;
+      if (isNewRecord) {
+        highScore = score;
+        if (highScoreStorageAvailable) {
+          try {
+            window.localStorage.setItem(highScoreStorageKey, String(highScore));
+          } catch {
+            highScoreStorageAvailable = false;
+          }
+        }
+      }
+
       const ratio = score / quizData.length;
       if (ratio >= 0.9) {
         resultEmoji.textContent = "🏆";
@@ -544,6 +592,11 @@
         resultTitle.textContent = "다시 도전해볼까요?";
       }
       resultText.textContent = "최종 점수: " + score + " / " + quizData.length;
+      bestScoreText.textContent = "최고 점수: " + highScore + " / " + quizData.length;
+      recordStatus.textContent = isNewRecord ? "새 기록! 최고 점수를 갱신했어요." : "";
+      storageNotice.textContent = highScoreStorageAvailable
+        ? ""
+        : "최고 점수는 이 탭에서만 유지되며, 다시 열면 저장되지 않습니다.";
       restartBtn.focus();
     }
 
@@ -563,6 +616,7 @@
       resultView.classList.add("hidden");
       quizView.classList.remove("hidden");
       renderQuestion();
+      choicesEl.firstElementChild.focus();
     }
 
     nextBtn.addEventListener("click", nextQuestion);
